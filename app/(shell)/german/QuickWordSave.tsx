@@ -57,7 +57,7 @@ export default function QuickWordSave({
       const res = await fetch("/api/german/generate", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ từ: w, model: getStoredModel() ?? undefined }),
+        body: JSON.stringify({ word: w, model: getStoredModel() ?? undefined }),
       });
       const data = (await res.json()) as {
         definition?: string;
@@ -105,7 +105,7 @@ export default function QuickWordSave({
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
-          từ: w,
+          word: w,
           definition: definition.trim(),
           example: example.trim(),
           translation: translation.trim(),
