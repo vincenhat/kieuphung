@@ -309,8 +309,9 @@ function isRetryable(err: unknown): boolean {
   );
 }
 
-function friendlyError(err: unknown): Error {
+function friendlyError(err: unknown, modelLabel?: string): Error {
   const msg = err instanceof Error ? err.message : String(err);
+  const where = modelLabel ? ` (${modelLabel})` : "";
   if (/_API_KEY is not set/i.test(msg)) {
     return new Error(msg.replace(/\.$/, "") + ". Add it to your environment.");
   }
@@ -320,16 +321,20 @@ function friendlyError(err: unknown): Error {
     /Too Many Requests/i.test(msg)
   ) {
     return new Error(
-      "This model hit its rate limit. Pick a different model from the switcher and try again.",
+      `Rate limit hit${where}. Pick a different model from the switcher and try again.`,
     );
   }
-  return new Error("AI request failed. Try again, or switch models.");
+  // Trim noisy provider payloads but keep the status + first line so the
+  // user (and devs) actually see what went wrong instead of a generic mask.
+  const compact = msg.replace(/\s+/g, " ").trim().slice(0, 240);
+  return new Error(`AI request failed${where}: ${compact}`);
 }
 
 /**
  * Generate text with the chosen model (by id). Retries transient quota / 5xx
- * errors up to 3 times with backoff. On a hard rate limit the friendly error
- * nudges the user toward the model switcher.
+ * errors up to 3 times with backoff. If the chosen model still fails and it
+ * isn't the env-default Gemini model, falls back to the default once so a
+ * single flaky provider doesn't take the AI button offline.
  */
 export async function generateText(
   prompt: string,
@@ -338,18 +343,46 @@ export async function generateText(
 ): Promise<string> {
   const chosen = resolveModel(modelId);
 
+  try {
+    return await runOnModel(chosen, prompt, system);
+  } catch (err) {
+    const fallback = pickFallback(chosen);
+    if (!fallback) throw friendlyError(err, chosen.label);
+    try {
+      return await runOnModel(fallback, prompt, system);
+    } catch (err2) {
+      // Both attempts failed — surface the fallback's error since that's the
+      // last thing the user effectively asked for.
+      throw friendlyError(err2, `${chosen.label} → ${fallback.label}`);
+    }
+  }
+}
+
+async function runOnModel(m: AIModel, prompt: string, system?: string): Promise<string> {
   let lastErr: unknown;
   for (let attempt = 0; attempt < 3; attempt++) {
     try {
-      if (chosen.provider === "gemini") {
-        return await geminiGenerate(chosen.model, prompt, system);
+      if (m.provider === "gemini") {
+        return await geminiGenerate(m.model, prompt, system);
       }
-      return await openAICompatGenerate(chosen.provider, chosen.model, prompt, system);
+      return await openAICompatGenerate(m.provider, m.model, prompt, system);
     } catch (err) {
       lastErr = err;
       if (attempt === 2 || !isRetryable(err)) break;
       await new Promise((r) => setTimeout(r, backoffMs(err, attempt)));
     }
   }
-  throw friendlyError(lastErr);
+  throw lastErr;
+}
+
+/**
+ * If the user-chosen model fails, retry on the env-default Gemini model so
+ * the AI button keeps working when one provider is flaky. Skips when the
+ * chosen model already IS the default (nothing else to try).
+ */
+function pickFallback(chosen: AIModel): AIModel | null {
+  const def = resolveModel(null); // env GEMINI_MODEL → DEFAULT_ID → first available
+  if (def.id === chosen.id) return null;
+  if (!providerKey(def.provider)) return null;
+  return def;
 }
