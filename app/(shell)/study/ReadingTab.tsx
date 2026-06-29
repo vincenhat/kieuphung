@@ -181,7 +181,7 @@ export default function ReadingTab({
           to your deck.
         </p>
 
-        <div className="mt-4 grid gap-3 md:grid-cols-[1fr_140px_160px_auto]">
+        <div className="mt-4 space-y-3">
           <label className="block">
             <span className="block text-xs font-medium ink-muted">Topic</span>
             <input
@@ -190,7 +190,7 @@ export default function ReadingTab({
               onChange={(e) => setTopic(e.target.value)}
               maxLength={120}
               placeholder="e.g. A weekend in Da Nang"
-              className="input mt-1"
+              className="input mt-1 w-full"
             />
             <datalist id="reading-topic-suggestions">
               {TOPIC_SUGGESTIONS.map((t) => (
@@ -199,45 +199,47 @@ export default function ReadingTab({
             </datalist>
           </label>
 
-          <label className="block">
-            <span className="block text-xs font-medium ink-muted">CEFR level</span>
-            <select
-              value={cefr}
-              onChange={(e) => setCefr(e.target.value as CefrLevel)}
-              className="input mt-1"
-            >
-              {CEFR_LEVELS.map((l) => (
-                <option key={l} value={l}>
-                  {l}
-                </option>
-              ))}
-            </select>
-          </label>
+          <div className="grid gap-3 md:grid-cols-[140px_160px_auto]">
+            <label className="block">
+              <span className="block text-xs font-medium ink-muted">CEFR level</span>
+              <select
+                value={cefr}
+                onChange={(e) => setCefr(e.target.value as CefrLevel)}
+                className="input mt-1"
+              >
+                {CEFR_LEVELS.map((l) => (
+                  <option key={l} value={l}>
+                    {l}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label className="block">
-            <span className="block text-xs font-medium ink-muted">Category</span>
-            <select
-              value={category}
-              onChange={(e) => setCategory(e.target.value as ReadingCategory)}
-              className="input mt-1"
-            >
-              {READING_CATEGORIES.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </label>
+            <label className="block">
+              <span className="block text-xs font-medium ink-muted">Category</span>
+              <select
+                value={category}
+                onChange={(e) => setCategory(e.target.value as ReadingCategory)}
+                className="input mt-1"
+              >
+                {READING_CATEGORIES.map((c) => (
+                  <option key={c} value={c}>
+                    {c}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <div className="flex items-end">
-            <button
-              type="button"
-              onClick={generate}
-              disabled={generating}
-              className="btn-primary w-full md:w-auto"
-            >
-              {generating ? "Writing…" : "Generate"}
-            </button>
+            <div className="flex items-end">
+              <button
+                type="button"
+                onClick={generate}
+                disabled={generating}
+                className="btn-primary w-full md:w-auto"
+              >
+                {generating ? "Writing…" : "Generate"}
+              </button>
+            </div>
           </div>
         </div>
 
