@@ -44,7 +44,7 @@ const NAV: NavItem[] = [
   },
 ];
 
-const BRAND = "Đăng Phúc · Study";
+const BRAND = "Kiều Phụng · Study";
 
 export default function Sidebar() {
   const pathname = usePathname();

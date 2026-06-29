@@ -3,12 +3,12 @@ import { cookies } from "next/headers";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Đăng Phúc · Study",
+  title: "Kiều Phụng · Study",
   description: "Vocabulary, grammar, reading and writing practice for ESL learners.",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Đăng Phúc",
+    title: "Kiều Phụng",
   },
 };
 
